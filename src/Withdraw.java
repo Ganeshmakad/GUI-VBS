@@ -40,6 +40,7 @@ class Withdraw extends JFrame
                 a->{
                     double wbalance=0.0;
                     double wlimit=0.0;
+                    double currbalance=0.0;
                     //part 1 withdrawable balance has been fetched
                     String url = "jdbc:mysql://localhost:3306/batch2";
                     try(Connection con = DriverManager.getConnection(url,"root","Ganesh@216"))
@@ -77,19 +78,20 @@ class Withdraw extends JFrame
                         }
                         else
                         {
-                            wbalance -= wamount;
+                            currbalance = wbalance - wamount;
                             //part 3 update back in table;
                             try (Connection con = DriverManager.getConnection(url, "root", "Ganesh@216"))
                             {
                                 String sql = "update users set balance=? where username=?";
                                 try (PreparedStatement pst = con.prepareStatement(sql))
                                 {
-                                    pst.setDouble(1, wbalance);
+                                    pst.setDouble(1, currbalance);
                                     pst.setString(2, username);
                                     pst.executeUpdate();
 
                                     JOptionPane.showMessageDialog(null, "WITHDRAWAL SUCCESSFUL");
                                     t1.setText(""); // to clear the input amount once it had been enetered;
+                                    updatePassbook(username,"Withdraw",-wamount,currbalance);
                                 }
                             } catch (Exception e) {
                                 JOptionPane.showMessageDialog(null, e.getMessage());
@@ -115,7 +117,25 @@ class Withdraw extends JFrame
         setTitle("Withdraw Money");
     }
 
+    void updatePassbook(String username,String desc,Double amt,Double total) {
+        String url = "jdbc:mysql://localhost:3306/batch2";
+        try (Connection con = DriverManager.getConnection(url, "root", "Ganesh@216")) {
+            String sql = "insert into transactions(username,description,amount,balance) values(?,?,?,?)";
+            try (PreparedStatement pst = con.prepareStatement(sql)) {
+                pst.setString(1, username);
+                pst.setString(2, desc);
+                pst.setDouble(3, amt);
+                pst.setDouble(4, total);
+
+                pst.executeUpdate();
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, e.getMessage());
+        }
+    }
+
     public static void main(String[] args) {
         new Withdraw("gangu");
     }
+
 }

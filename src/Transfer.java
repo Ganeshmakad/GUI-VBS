@@ -61,95 +61,103 @@ class Transfer extends JFrame {
 
         b1.addActionListener(
                 a->{
-                    String s1 = t1.getText();
-                    String s2 = t2.getText();
-                    if(s1.isEmpty() || s2.isEmpty())
+                    String rec = t1.getText();
+                    String amt = t2.getText();
+                    if(rec.isEmpty() || amt.isEmpty())
                     {
                         JOptionPane.showMessageDialog(null,"Cannot Be Blank");
                         return;
                     }
-                    String url = "jdbc:mysql://localhost:3306/batch2";
-                    //part1 sender baollance getting
-                    double balance=0.0;
-                    try(Connection con = DriverManager.getConnection(url,"root","Ganesh@216")){
-                        String sql = "select balance from users where username=?";
-                        try(PreparedStatement pst = con.prepareStatement(sql)){
-                            pst.setString(1,username);
-                            ResultSet rs = pst.executeQuery();
-                            if(rs.next())
-                            {
-                                balance=rs.getDouble("balance");
-                            }
-                        }
-                    }
-                    catch(Exception e){
-                        JOptionPane.showMessageDialog(null,e.getMessage());
-                    }
 
-                    //part 2 calculating new balance and updating
-                    double amount = Double.parseDouble(s2);
+                    //part1 sender balance getting
+                    double balance = fetchBalance(username);
+                    //failing condition for amount
+                    double amount = Double.parseDouble(amt);
                     if(amount>balance)
                     {
                         JOptionPane.showMessageDialog(null,"INSUFFICIENT FUNDS");
                         return;
                     }
-                    balance -= amount;
+                    //part 2 calculating new balance and updating sender
+                    double total  = balance - amount;
                     // actually updating
-                    try(Connection con = DriverManager.getConnection(url,"root","Ganesh@216"))
-                    {
-                        String sql = "update users set balance=? where username=?";
-                        try(PreparedStatement pst = con.prepareStatement(sql)){
-                            pst.setDouble(1,balance);
-                            pst.setString(2,username);
-                            pst.executeUpdate();
-                        }
-                    }
-                    catch (Exception e) {
-                        JOptionPane.showMessageDialog(null,e.getMessage());
-                    }
-
+                    updateBalance(username,total);
+                    //update passbook of sender
+                    updatePassbook(username,"Transferred to "+rec,-amount,total);
                     //Reciver details changing
-                    //part 1 fetching balance
-                    try(Connection con = DriverManager.getConnection(url,"root","Ganesh@216")) {
-                        String sql = "select balance from users where username=?";
-                        try(PreparedStatement pst = con.prepareStatement(sql))
-                        {
-                            pst.setString(1,s1);
-                            ResultSet rs = pst.executeQuery();
-                            if(rs.next())
-                            {
-                                balance=rs.getDouble("balance");
-                            }
-                        }
-                    }
-                    catch (Exception e){
-                        JOptionPane.showMessageDialog(null,e.getMessage());
-                    }
-                    balance+=amount;
-                    try(Connection con = DriverManager.getConnection(url,"root","Ganesh@216")){
-                        String sql = "update users set balance=? where username=?";
-                        try(PreparedStatement pst = con.prepareStatement(sql)){
-                            pst.setDouble(1,balance);
-                            pst.setString(2,s1);
-                            pst.executeUpdate();
 
-                            JOptionPane.showMessageDialog(null,"Transferred "+amount+" Successfully ");
-                            t1.setText("");
-                            t2.setText("");
-                        }
-                    }
-                    catch (Exception e){
-                        JOptionPane.showMessageDialog(null,e.getMessage());
-                    }
+                    //part 1 fetching balance and calculating total
+
+                    balance = fetchBalance(rec);
+                    total = balance + amount;
+                    //part 2 updating receivers balance
+                    updateBalance(rec,total);
+
+                    JOptionPane.showMessageDialog(null,"TRANSFER SUCCESSFUL");
+                    updatePassbook(rec,"Received from "+username,amount,total);
+                    t1.setText("");
+                    t2.setText("");
                 }
         );
-
 
         setVisible(true);
         setSize(800, 550);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setTitle("Transfer Funds");
+    }
+
+    void updatePassbook(String username,String desc,Double amt,Double total) {
+        String url = "jdbc:mysql://localhost:3306/batch2";
+        try (Connection con = DriverManager.getConnection(url, "root", "Ganesh@216")) {
+            String sql = "insert into transactions(username,description,amount,balance) values(?,?,?,?)";
+            try (PreparedStatement pst = con.prepareStatement(sql)) {
+                pst.setString(1, username);
+                pst.setString(2, desc);
+                pst.setDouble(3, amt);
+                pst.setDouble(4, total);
+
+                pst.executeUpdate();
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, e.getMessage());
+        }
+    }
+
+    Double fetchBalance(String username){
+        double balance=0.0;
+        String url = "jdbc:mysql://localhost:3306/batch2";
+        try(Connection con = DriverManager.getConnection(url,"root","Ganesh@216")){
+            String sql = "select balance from users where username=?";
+            try(PreparedStatement pst = con.prepareStatement(sql)){
+                pst.setString(1,username);
+                ResultSet rs = pst.executeQuery();
+                if(rs.next())
+                {
+                    balance=rs.getDouble("balance");
+                }
+            }
+        }
+        catch(Exception e){
+            JOptionPane.showMessageDialog(null,e.getMessage());
+        }
+        return balance;
+    }
+
+    void updateBalance(String username,double total){
+        String url = "jdbc:mysql://localhost:3306/batch2";
+        try(Connection con = DriverManager.getConnection(url,"root","Ganesh@216"))
+        {
+            String sql = "update users set balance=? where username=?";
+            try(PreparedStatement pst = con.prepareStatement(sql)){
+                pst.setDouble(1,total);
+                pst.setString(2,username);
+                pst.executeUpdate();
+            }
+        }
+        catch (Exception e) {
+            JOptionPane.showMessageDialog(null,e.getMessage());
+        }
     }
 
     public static void main(String[] args) {

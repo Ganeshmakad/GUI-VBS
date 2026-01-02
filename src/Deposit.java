@@ -42,6 +42,7 @@ class Deposit extends JFrame
 //                  part 1 wk round marke aya aur balance mila
                     double balance=0.0;
                     double total=0.0;
+                    double amount=0.0;
                     String url = "jdbc:mysql://localhost:3306/batch2";
                     try(Connection con = DriverManager.getConnection(url,"root","Ganesh@216")) {
                         String sql = "select balance from users where username=?";
@@ -67,7 +68,7 @@ class Deposit extends JFrame
                     }
                     else
                     {
-                        double amount = Double.parseDouble(s1);
+                        amount = Double.parseDouble(s1);
                         total = amount + balance;
                     }
 
@@ -81,7 +82,8 @@ class Deposit extends JFrame
                                 pst.executeUpdate();
 
                                 JOptionPane.showMessageDialog(null,"DEPOSIT SUCCESSFUL");
-                                t1.setText(""); // to clear the input amount once it had been enetered;
+                                t1.setText(""); // to clear the input amount once it had been entered;
+                                updatePassbook(username,"Deposit",amount,total);
                             }
                     }
                     catch (Exception e)
@@ -103,6 +105,25 @@ class Deposit extends JFrame
         setLocationRelativeTo(null);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setTitle("Deposit Money");
+    }
+
+    void updatePassbook(String username,String desc,Double amt,Double total){
+        String url = "jdbc:mysql://localhost:3306/batch2";
+        try(Connection con = DriverManager.getConnection(url,"root","Ganesh@216")){
+            String sql = "insert into transactions(username,description,amount,balance) values(?,?,?,?)";
+            try(PreparedStatement pst = con.prepareStatement(sql)){
+                pst.setString(1,username);
+                pst.setString(2,desc);
+                pst.setDouble(3,amt);
+                pst.setDouble(4,total);
+
+                pst.executeUpdate();
+            }
+        }
+        catch (Exception e){
+            JOptionPane.showMessageDialog(null,e.getMessage());
+        }
+
     }
 
     public static void main(String[] args) {
