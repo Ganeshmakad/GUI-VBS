@@ -74,6 +74,12 @@ class Home extends JFrame {
                     dispose();
                 }
         );
+        b5.addActionListener(
+                a->{
+                    new Passbook(username);
+                    dispose();
+                }
+        );
         b6.addActionListener(
                 a->
                 {

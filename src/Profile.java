@@ -90,7 +90,18 @@ String currUserName;
                                 pst.setString(1, s2);
                                 pst.setString(2, currUserName);
                                 pst.executeUpdate();
+//here flow for username update is when user decide to change name then curr username has the old name from the db the sql
+//query passed is set username = new value (name) where username = currusername(old one) once this is updated then we change
+//the variable cur user name so that return or next page is called through name new name can be passed
                                 if(s1.equalsIgnoreCase("username")) {
+                                    //and will change the name in the transaction table also so that passbook is correct
+                                    //then actually update the variable
+                                    String sq = "update transactions set username = ? where username=?";
+                                    try(PreparedStatement ps = con.prepareStatement(sq)){
+                                        ps.setString(1,s2);
+                                        ps.setString(2,currUserName);
+                                        ps.executeUpdate();
+                                    }
                                     currUserName = s2;
                                 }
                                 JOptionPane.showMessageDialog(null, "UPDATE SUCCESSFUL");
@@ -105,7 +116,7 @@ String currUserName;
                 }
         );
 
-        //yaha par agar username change kiya to username me to abhi old vala hai usko update karna padega
+        //yaha par agar username change kiya to username me to abhi old vala hai usko update karna padega so we used var
         b2.addActionListener(
                 a->{
                     new Home(currUserName);

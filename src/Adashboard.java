@@ -79,6 +79,73 @@ class Adashboard extends JFrame {
         c.add(centerPanel, BorderLayout.CENTER);
         c.add(bottomPanel, BorderLayout.SOUTH);
 
+        String url = "jdbc:mysql://localhost:3306/batch2";
+        try(Connection con = DriverManager.getConnection(url,"root","Ganesh@216")){
+            String sql = "select * from users";
+            try(PreparedStatement pst = con.prepareStatement(sql)){
+                ResultSet rs = pst.executeQuery();
+                while(rs.next()){
+                    String username = rs.getString("username");
+                    double balance = rs.getDouble("balance");
+                    String phone = rs.getString("phone");
+                    String email = rs.getString("email");
+                    String gender = rs.getString("gender");
+                    double wlimit = rs.getDouble("wlimit");
+                    tableModel.addRow(new Object[]{username,balance,phone,email,gender,wlimit});
+                }
+            }
+        }
+        catch (Exception e){
+            JOptionPane.showMessageDialog(null,e.getMessage());
+        }
+
+        b1.addActionListener(
+                a->{
+                    //1->old table khali 2->read min and max 3->naya table accr to filter
+                    tableModel.setRowCount(0); //table cleared
+                    String s1 = t1.getText();
+                    String s2 = t2.getText();
+                    double min,max;
+
+                    if(s1.isEmpty())
+                    {
+                        min=0.0;
+                    }
+                    else
+                    {
+                        min=Double.parseDouble(s1);
+                    }
+                    if(s2.isEmpty())
+                    {
+                        max=Double.MAX_VALUE;
+                    }
+                    else
+                    {
+                        max=Double.parseDouble(s2);
+                    }
+
+                    try(Connection con = DriverManager.getConnection(url,"root","Ganesh@216")){
+                        String sql = "select * from users where balance between "+min+" and "+max;
+                        try(PreparedStatement pst = con.prepareStatement(sql)){
+                            ResultSet rs = pst.executeQuery();
+                            while(rs.next()){
+                                String username = rs.getString("username");
+                                double balance = rs.getDouble("balance");
+                                String phone = rs.getString("phone");
+                                String email = rs.getString("email");
+                                String gender = rs.getString("gender");
+                                double wlimit = rs.getDouble("wlimit");
+                                tableModel.addRow(new Object[]{username,balance,phone,email,gender,wlimit});
+                            }
+                        }
+                    }
+                    catch (Exception e){
+                        JOptionPane.showMessageDialog(null,e.getMessage());
+                    }
+
+                }
+        );
+
         setTitle("Admin Dashboard");
         setSize(900, 600);
         setLocationRelativeTo(null);
